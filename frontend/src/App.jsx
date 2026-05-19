@@ -65,7 +65,7 @@ function App() {
 
   // Filter products when category or search query changes
   useEffect(() => {
-    let result = products;
+    let result = Array.isArray(products) ? products : [];
     if (selectedCategory !== 'All') {
       result = result.filter(p => p.category === selectedCategory);
     }
@@ -87,7 +87,13 @@ function App() {
     setProductsLoading(true);
     try {
       const response = await api.get('/products');
-      setProducts(response.data);
+      if (Array.isArray(response.data)) {
+        setProducts(response.data);
+      } else {
+        console.error('Products API returned a non-array response:', response.data);
+        setProducts([]);
+        showToast('Invalid products data format from server.', 'error');
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       showToast('Failed to load products. Is Product Service / Gateway running?', 'error');
@@ -100,7 +106,13 @@ function App() {
     setOrdersLoading(true);
     try {
       const response = await api.get('/orders');
-      setOrders(response.data);
+      if (Array.isArray(response.data)) {
+        setOrders(response.data);
+      } else {
+        console.error('Orders API returned a non-array response:', response.data);
+        setOrders([]);
+        showToast('Invalid orders data format from server.', 'error');
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       showToast('Failed to load order history.', 'error');
