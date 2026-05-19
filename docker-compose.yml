@@ -1,85 +1,15 @@
 # =============================================================
-#  Distributed E-Commerce Platform – Docker Compose
+#  Distributed E-Commerce Platform – Docker Compose (Cloud MongoDB Atlas)
 #  Custom bridge network: ecommerce-network
-#  Isolated MongoDB per service (data separation guaranteed)
-#  Inter-service URLs use Docker DNS (no localhost)
+#  Services connect directly to MongoDB Atlas Cloud Database
 # =============================================================
 
-# ─── Named Volumes (persistent data) ─────────────────────────
-volumes:
-  user_db_data:
-  product_db_data:
-  order_db_data:
-  payment_db_data:
-
-# ─── Custom Bridge Network ────────────────────────────────────
 networks:
   ecommerce-network:
     driver: bridge
     name: ecommerce-network
 
-# ─── Services ─────────────────────────────────────────────────
 services:
-
-  # ── MongoDB: User Service ──────────────────────────────────
-  mongo-user:
-    image: mongo:7.0
-    container_name: mongo-user
-    restart: unless-stopped
-    volumes:
-      - user_db_data:/data/db
-    networks:
-      - ecommerce-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── MongoDB: Product Service ───────────────────────────────
-  mongo-product:
-    image: mongo:7.0
-    container_name: mongo-product
-    restart: unless-stopped
-    volumes:
-      - product_db_data:/data/db
-    networks:
-      - ecommerce-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── MongoDB: Order Service ─────────────────────────────────
-  mongo-order:
-    image: mongo:7.0
-    container_name: mongo-order
-    restart: unless-stopped
-    volumes:
-      - order_db_data:/data/db
-    networks:
-      - ecommerce-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ── MongoDB: Payment Service ───────────────────────────────
-  mongo-payment:
-    image: mongo:7.0
-    container_name: mongo-payment
-    restart: unless-stopped
-    volumes:
-      - payment_db_data:/data/db
-    networks:
-      - ecommerce-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ── User Service ───────────────────────────────────────────
   user-service:
@@ -88,17 +18,14 @@ services:
       dockerfile: Dockerfile
     container_name: user-service
     restart: unless-stopped
+    env_file:
+      - ./user-service/.env
     environment:
-      PORT: 5001
-      MONGODB_URI: mongodb://mongo-user:27017/user_service_db
       NODE_ENV: production
     ports:
       - "5001:5001"
     networks:
       - ecommerce-network
-    depends_on:
-      mongo-user:
-        condition: service_healthy
 
   # ── Product Service ────────────────────────────────────────
   product-service:
@@ -107,17 +34,14 @@ services:
       dockerfile: Dockerfile
     container_name: product-service
     restart: unless-stopped
+    env_file:
+      - ./product-service/.env
     environment:
-      PORT: 5002
-      MONGODB_URI: mongodb://mongo-product:27017/product_service_db
       NODE_ENV: production
     ports:
       - "5002:5002"
     networks:
       - ecommerce-network
-    depends_on:
-      mongo-product:
-        condition: service_healthy
 
   # ── Order Service ──────────────────────────────────────────
   order-service:
@@ -126,10 +50,9 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     restart: unless-stopped
+    env_file:
+      - ./order-service/.env
     environment:
-      PORT: 5003
-      MONGODB_URI: mongodb://mongo-order:27017/order_service_db
-      # Docker service discovery replaces localhost
       PRODUCT_SERVICE_URL: http://product-service:5002
       PAYMENT_SERVICE_URL: http://payment-service:5004
       NODE_ENV: production
@@ -138,12 +61,8 @@ services:
     networks:
       - ecommerce-network
     depends_on:
-      mongo-order:
-        condition: service_healthy
-      product-service:
-        condition: service_started
-      payment-service:
-        condition: service_started
+      - product-service
+      - payment-service
 
   # ── Payment Service ────────────────────────────────────────
   payment-service:
@@ -152,17 +71,14 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     restart: unless-stopped
+    env_file:
+      - ./payment-service/.env
     environment:
-      PORT: 5004
-      MONGODB_URI: mongodb://mongo-payment:27017/payment_service_db
       NODE_ENV: production
     ports:
       - "5004:5004"
     networks:
       - ecommerce-network
-    depends_on:
-      mongo-payment:
-        condition: service_healthy
 
   # ── API Gateway ────────────────────────────────────────────
   api-gateway:
@@ -173,7 +89,6 @@ services:
     restart: unless-stopped
     environment:
       PORT: 5000
-      # Docker internal DNS – no more localhost!
       USER_SERVICE_URL: http://user-service:5001
       PRODUCT_SERVICE_URL: http://product-service:5002
       ORDER_SERVICE_URL: http://order-service:5003
