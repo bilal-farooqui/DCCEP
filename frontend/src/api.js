@@ -7,6 +7,7 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
+    'bypass-tunnel-reminder': 'true', // Bypasses localtunnel landing page automatically
   },
   timeout: 10000, // 10-second timeout
 });
