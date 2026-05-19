@@ -134,7 +134,12 @@ app.post('/orders', async (req, res) => {
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB (Order Service)'))
+  .then((conn) => {
+    console.log(`=========================================`);
+    console.log(`🌱 MongoDB Connected (Order Service)!`);
+    console.log(`🗄️  Active Database: ${conn.connection.name}`);
+    console.log(`=========================================`);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 app.listen(PORT, () => {

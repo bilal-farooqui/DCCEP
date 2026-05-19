@@ -14,7 +14,12 @@ app.use(express.json());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB (Payment Service)'))
+  .then((conn) => {
+    console.log(`=========================================`);
+    console.log(`🌱 MongoDB Connected (Payment Service)!`);
+    console.log(`🗄️  Active Database: ${conn.connection.name}`);
+    console.log(`=========================================`);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // PaymentLog Schema

@@ -80,7 +80,12 @@ app.post('/login', async (req, res) => {
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB (User Service)'))
+  .then((conn) => {
+    console.log(`=========================================`);
+    console.log(`🌱 MongoDB Connected (User Service)!`);
+    console.log(`🗄️  Active Database: ${conn.connection.name}`);
+    console.log(`=========================================`);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 app.listen(PORT, () => {

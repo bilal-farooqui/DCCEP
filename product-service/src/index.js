@@ -81,7 +81,12 @@ app.get('/products/:id', (req, res) => {
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB (Product Service)'))
+  .then((conn) => {
+    console.log(`=========================================`);
+    console.log(`🌱 MongoDB Connected (Product Service)!`);
+    console.log(`🗄️  Active Database: ${conn.connection.name}`);
+    console.log(`=========================================`);
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 app.listen(PORT, () => {
