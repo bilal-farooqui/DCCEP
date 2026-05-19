@@ -4,7 +4,7 @@ import axios from 'axios';
 // Using '/api' as the baseURL leverages the Vite development proxy.
 // In production, this can be swapped with your production API Gateway URL.
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
