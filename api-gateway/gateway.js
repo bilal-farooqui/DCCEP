@@ -77,7 +77,18 @@ app.use('/api/payments', proxy(PAYMENT_SERVICE_URL, {
 
 // Fallback Route
 app.use('/', (req, res) => {
-  res.status(200).send('API Gateway is running. Ready to route requests.');
+  res.status(200).json({
+    status: 'online',
+    message: 'API Gateway is running. Ready to route requests.',
+    diagnostics: {
+      has_mongodb_uri: !!process.env.MONGODB_URI,
+      mongodb_uri_preview: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 30) + '...' : 'undefined',
+      USER_SERVICE_URL,
+      PRODUCT_SERVICE_URL,
+      ORDER_SERVICE_URL,
+      PAYMENT_SERVICE_URL
+    }
+  });
 });
 
 app.listen(PORT, () => {
