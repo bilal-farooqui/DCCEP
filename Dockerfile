@@ -17,7 +17,7 @@ RUN chmod -R 777 /app
 RUN npm install
 
 # Install dependencies for all microservices
-RUN npm run install:all
+RUN npm run install:backend
 
 # Set environment variables for microservices internal routing
 ENV PORT=7860

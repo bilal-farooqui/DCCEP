@@ -4,6 +4,7 @@
   "description": "Distributed System Project Management",
   "scripts": {
     "install:all": "npm install --prefix user-service && npm install --prefix product-service && npm install --prefix order-service && npm install --prefix payment-service && npm install --prefix api-gateway && npm install --prefix frontend",
+    "install:backend": "npm install --prefix user-service && npm install --prefix product-service && npm install --prefix order-service && npm install --prefix payment-service && npm install --prefix api-gateway",
     "start:user": "npm run dev --prefix user-service",
     "start:product": "npm run dev --prefix product-service",
     "start:order": "npm run dev --prefix order-service",
