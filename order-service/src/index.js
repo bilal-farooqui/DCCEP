@@ -70,6 +70,11 @@ app.post('/orders', async (req, res) => {
     }
   }
 
+  // Stock check
+  if (product.stock < quantity) {
+    return res.status(400).json({ message: `Insufficient product stock. Only ${product.stock} left in inventory.` });
+  }
+
   const totalPrice = product.price * quantity;
 
   // Step 2: Order Creation (default to 'pending')
@@ -102,13 +107,21 @@ app.post('/orders', async (req, res) => {
     // Step 4: Status Update (completed or failed)
     if (paymentData.success) {
       savedOrder.status = 'completed';
+      // Deduct stock in Product Service
+      try {
+        await axios.post(`${PRODUCT_SERVICE_URL}/products/${productId}/reduce-stock`, { quantity }, { timeout: 3000 });
+      } catch (err) {
+        console.error(`Failed to deduct stock in product-service for product ${productId}:`, err.message);
+      }
     } else {
       savedOrder.status = 'failed';
     }
     await savedOrder.save();
 
     return res.status(201).json({
-      message: paymentData.success ? 'Order placed and paid successfully.' : 'Order placed, but payment was declined.',
+      message: paymentData.success 
+        ? 'Order placed and paid successfully.' 
+        : (paymentData.message || 'Order placed, but payment was declined.'),
       order: savedOrder,
       payment: {
         success: paymentData.success,

@@ -38,6 +38,8 @@ app.get('/', (req, res) => {
   res.send('Payment Simulation Service is running...');
 });
 
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5001';
+
 // POST endpoint /payment/process
 app.post('/payment/process', async (req, res) => {
   const { orderId, userId, amount } = req.body;
@@ -52,8 +54,34 @@ app.post('/payment/process', async (req, res) => {
   // Simulate a realistic distributed delay using a 1.5-second setTimeout
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  // 70% success rate and 30% failure rate
-  const success = Math.random() < 0.7;
+  let success = false;
+  let message = '';
+
+  try {
+    // Call user-service to check and deduct user's wallet balance
+    const deductResponse = await fetch(`${USER_SERVICE_URL}/deduct-balance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username: userId, amount })
+    });
+
+    const deductData = await deductResponse.json();
+
+    if (deductResponse.ok) {
+      success = true;
+      message = 'Payment processed and wallet balance deducted successfully.';
+    } else {
+      success = false;
+      message = deductData.message || 'Payment declined.';
+    }
+  } catch (error) {
+    console.error('Error communicating with user-service:', error.message);
+    success = false;
+    message = 'Payment failed: User wallet service is offline.';
+  }
+
   const status = success ? 'success' : 'failed';
 
   try {
@@ -69,8 +97,9 @@ app.post('/payment/process', async (req, res) => {
     res.status(200).json({
       success,
       status,
-      transactionId: savedLog._id,
-      paymentLog: savedLog
+      transactionId: success ? savedLog._id : undefined,
+      paymentLog: savedLog,
+      message
     });
   } catch (error) {
     console.error('Error processing payment:', error);

@@ -53,13 +53,27 @@ function App() {
   // Global Notifications (Toast)
   const [toast, setToast] = useState(null);
 
+  // Helper to refresh logged-in user balance from User Service
+  const refreshUserBalance = async (username) => {
+    try {
+      const response = await api.get(`/users/${username}`);
+      const updatedUser = response.data;
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error('Error refreshing user balance:', error);
+    }
+  };
+
   // Fetch initial product catalog
   useEffect(() => {
     fetchProducts();
     // Restore session if available
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      refreshUserBalance(parsedUser.username);
     }
   }, []);
 
@@ -240,6 +254,10 @@ function App() {
       
       const payload = response.data;
       const isSuccess = payload.payment ? payload.payment.success : true;
+      if (isSuccess) {
+        refreshUserBalance(user.username);
+        fetchProducts();
+      }
 
       setCheckoutResult({
         success: isSuccess,
@@ -295,13 +313,18 @@ function App() {
             </button>
 
             {user ? (
-              <div className="user-widget">
+              <div className="user-widget" style={{ padding: '0.4rem 1.2rem', borderRadius: '16px' }}>
                 <div className="user-avatar">{user.name.charAt(0)}</div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user.name}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.1rem' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.2 }}>{user.name}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)', lineHeight: 1.2 }}>
+                    Wallet: ${Number(user.balance !== undefined ? user.balance : 1000).toFixed(2)}
+                  </span>
+                </div>
                 <button 
                   onClick={handleLogout} 
                   className="nav-link-btn" 
-                  style={{ padding: '0.2rem 0.5rem', display: 'flex', alignItems: 'center' }}
+                  style={{ padding: '0.2rem', display: 'flex', alignItems: 'center', marginLeft: '0.5rem' }}
                   title="Logout"
                 >
                   <LogOut size={16} />
@@ -328,16 +351,6 @@ function App() {
       <main className="container">
         {activeTab === 'shop' ? (
           <div>
-            {/* Hero Section */}
-            <section className="hero">
-              <span className="hero-tag">DISTRIBUTED COMPUTING DEMO</span>
-              <h1>State-of-the-Art Developer Store</h1>
-              <p>Explore an enterprise-grade microservice architecture simulation utilizing independent databases, resilient checkout sequences, and a global API Gateway.</p>
-              <button className="btn btn-primary" style={{ margin: '0 auto' }} onClick={() => setSelectedCategory('All')}>
-                Browse Collections
-              </button>
-            </section>
-
             {/* Catalog Toolbar */}
             <div className="filter-bar">
               <div className="category-tabs">
@@ -404,8 +417,9 @@ function App() {
                         <button 
                           className="btn btn-primary"
                           onClick={() => addToCart(product)}
+                          disabled={product.stock <= 0}
                         >
-                          <ShoppingCart size={16} /> Add to Cart
+                          <ShoppingCart size={16} /> {product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
                         </button>
                       </div>
                     </div>
@@ -574,10 +588,25 @@ function App() {
               <form onSubmit={triggerCheckout}>
                 <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.2rem' }}>Selected Product:</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span>{cart[0]?.name} (Qty: {cart[0]?.quantity})</span>
                     <span style={{ fontWeight: 800 }}>${cartTotal}</span>
                   </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.5rem 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    <span>Your Wallet Balance:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--success)' }}>${Number(user?.balance !== undefined ? user.balance : 1000).toFixed(2)}</span>
+                  </div>
+                  {user?.balance < cartTotal ? (
+                    <div style={{ marginTop: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--error)', color: 'var(--error)', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <AlertTriangle size={14} /> Insufficient Wallet Balance (Short of ${(cartTotal - (user?.balance || 0)).toFixed(2)})
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      <span>Remaining Balance:</span>
+                      <span style={{ fontWeight: 600 }}>${Number((user?.balance !== undefined ? user.balance : 1000) - cartTotal).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -624,7 +653,11 @@ function App() {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={user?.balance < cartTotal}
+                  >
                     <CreditCard size={16} /> Pay & Complete Order
                   </button>
                 </div>
