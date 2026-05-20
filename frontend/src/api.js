@@ -3,8 +3,16 @@ import axios from 'axios';
 // Create a unified Axios instance.
 // Using '/api' as the baseURL leverages the Vite development proxy.
 // In production, this can be swapped with your production API Gateway URL.
+const rawBaseURL = import.meta.env.VITE_API_URL;
+let baseURL = '/api';
+
+if (rawBaseURL) {
+  const cleanBase = rawBaseURL.trim().replace(/\/$/, ''); // Remove trailing slash
+  baseURL = cleanBase.endsWith('/api') ? cleanBase : `${cleanBase}/api`;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
     'bypass-tunnel-reminder': 'true', // Bypasses localtunnel landing page automatically
