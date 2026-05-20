@@ -3,15 +3,16 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-COPY user-service ./user-service
-COPY product-service ./product-service
-COPY order-service ./order-service
-COPY payment-service ./payment-service
-COPY api-gateway ./api-gateway
+# Copy files with node user ownership (UID 1000)
+COPY --chown=node:node package.json package-lock.json* ./
+COPY --chown=node:node user-service ./user-service
+COPY --chown=node:node product-service ./product-service
+COPY --chown=node:node order-service ./order-service
+COPY --chown=node:node payment-service ./payment-service
+COPY --chown=node:node api-gateway ./api-gateway
 
-# Set permissions for Hugging Face non-root user (UID 1000)
-RUN chmod -R 777 /app
+# Switch to node user (UID 1000) - Hugging Face runs as UID 1000
+USER node
 
 # Install root dependencies
 RUN npm install
