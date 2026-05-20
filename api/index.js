@@ -23,27 +23,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// Path rewrites for products and orders to match microservice specifications
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/products')) {
+    if (!req.url.startsWith('/api/products/products')) {
+      req.url = req.url.replace('/api/products', '/api/products/products');
+    }
+  }
+  if (req.url.startsWith('/api/orders')) {
+    if (!req.url.startsWith('/api/orders/orders')) {
+      req.url = req.url.replace('/api/orders', '/api/orders/orders');
+    }
+  }
+  next();
+});
+
 // Mount microservices as sub-apps
 app.use('/api/users', require('../user-service/src/index.js'));
-
-app.use('/api/products', (req, res, next) => {
-  if (req.url === '/' || req.url === '') {
-    req.url = '/products';
-  } else if (!req.url.startsWith('/products')) {
-    req.url = `/products${req.url}`;
-  }
-  next();
-}, require('../product-service/src/index.js'));
-
-app.use('/api/orders', (req, res, next) => {
-  if (req.url === '/' || req.url === '') {
-    req.url = '/orders';
-  } else if (!req.url.startsWith('/orders')) {
-    req.url = `/orders${req.url}`;
-  }
-  next();
-}, require('../order-service/src/index.js'));
-
+app.use('/api/products', require('../product-service/src/index.js'));
+app.use('/api/orders', require('../order-service/src/index.js'));
 app.use('/api/payments', require('../payment-service/server.js'));
 
 // API Gateway Root / Health check
