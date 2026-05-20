@@ -1,3 +1,13 @@
+---
+title: CEP Developer Store Backend
+emoji: ⚡
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # CEP DC Microservices
 
 A microservices-based e-commerce application.
