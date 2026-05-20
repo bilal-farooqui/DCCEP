@@ -25,8 +25,25 @@ app.use((req, res, next) => {
 
 // Mount microservices as sub-apps
 app.use('/api/users', require('../user-service/src/index.js'));
-app.use('/api/products', require('../product-service/src/index.js'));
-app.use('/api/orders', require('../order-service/src/index.js'));
+
+app.use('/api/products', (req, res, next) => {
+  if (req.url === '/' || req.url === '') {
+    req.url = '/products';
+  } else if (!req.url.startsWith('/products')) {
+    req.url = `/products${req.url}`;
+  }
+  next();
+}, require('../product-service/src/index.js'));
+
+app.use('/api/orders', (req, res, next) => {
+  if (req.url === '/' || req.url === '') {
+    req.url = '/orders';
+  } else if (!req.url.startsWith('/orders')) {
+    req.url = `/orders${req.url}`;
+  }
+  next();
+}, require('../order-service/src/index.js'));
+
 app.use('/api/payments', require('../payment-service/server.js'));
 
 // API Gateway Root / Health check
