@@ -155,6 +155,10 @@ mongoose.connect(process.env.MONGODB_URI)
   })
   .catch((err) => console.error('MongoDB connection error:', err));
 
-app.listen(PORT, () => {
-  console.log(`Order Service listening on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Order Service listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;

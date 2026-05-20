@@ -1,7 +1,7 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -107,6 +107,10 @@ app.post('/payment/process', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Payment Service listening on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Payment Service listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;
